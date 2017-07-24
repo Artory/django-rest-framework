@@ -34,8 +34,8 @@ from rest_framework.fields import get_error_detail, set_value
 from rest_framework.settings import api_settings
 from rest_framework.utils import html, model_meta, representation
 from rest_framework.utils.field_mapping import (
-    ClassLookupDict, get_field_kwargs, get_nested_relation_kwargs,
-    get_relation_kwargs, get_url_kwargs
+    ClassLookupDict, get_detail_view_name, get_field_kwargs,
+    get_nested_relation_kwargs, get_relation_kwargs
 )
 from rest_framework.utils.serializer_helpers import (
     BindingDict, BoundField, JSONBoundField, NestedBoundField, ReturnDict,
@@ -1250,8 +1250,17 @@ class ModelSerializer(Serializer):
         Create a field representing the object's own URL.
         """
         field_class = self.serializer_url_field
-        field_kwargs = get_url_kwargs(model_class)
 
+        default_view_name = get_detail_view_name(model_class)
+        view_name = getattr(self.Meta, 'view_name', default_view_name)
+
+        namespace = getattr(self.Meta, 'namespace', None)
+        if namespace:
+            view_name = '{}:{}'.format(namespace, view_name)
+
+        field_kwargs = {
+            'view_name': view_name,
+        }
         return field_class, field_kwargs
 
     def build_unknown_field(self, field_name, model_class):
